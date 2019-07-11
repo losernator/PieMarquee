@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
 import os
+import commands
+import subprocess
 from subprocess import *
 from time import *
 
-INTRO = "/opt/retropie/configs/all/PieMarquee/intro.mp4"
+INTRO = "/home/pi/PieMarquee/intro.mp4"
 CHANGE_INTERVAL = 5
 
 def run_cmd(cmd):
@@ -16,13 +18,17 @@ def run_cmd(cmd):
 def kill_proc(name):
     ps_grep = run_cmd("ps -aux | grep " + name + "| grep -v 'grep'")
     if len(ps_grep) > 1: 
-        run_cmd("killall -9 " + name)
-
-if os.path.isfile(INTRO) == True:
-    run_cmd("omxplayer --display 4 " + INTRO)
+        run_cmd("killall -9 " + name + " > /dev/null 2>&1")
 
 cur_imgpath = ""
 change_count = 0
+plist = commands.getstatusoutput("ps -ef | grep pngviewbg | grep -v grep | wc -l")
+if int(plist[1]) <> 1 :
+	subprocess.call("/home/pi/PieMarquee/pngviewbg -d4 -b0x0000 -l2000 '/home/pi/PieMarquee/blank.png' &", shell=True)
+
+if os.path.isfile(INTRO) == True:
+    run_cmd("omxplayer_silent --display 4 " + INTRO)
+
 while True:
     sleep_interval = 1
     romname = ""
@@ -77,10 +83,13 @@ while True:
     #print romname
     if imgpath != cur_imgpath:
         #print imgpath 
-        kill_proc("pngview")
-        kill_proc("omxplayer.bin")
+        run_cmd("killall -9 pngview > /dev/null 2>&1")
+        #run_cmd("killall -9 omxplayer_silent > /dev/null 2>&1")
+        run_cmd("killall -9 omxplayer.bin > /dev/null 2>&1")
+        #kill_proc("pngview")
+        #kill_proc("omxplayer.bin")
         if imgpath == "maintitle" and os.path.isfile("/home/pi/PieMarquee/marquee/maintitle.mp4") == True:
-            os.system("omxplayer --loop --no-osd --display 4 /home/pi/PieMarquee/marquee/maintitle.mp4 &")
+            os.system("omxplayer --loop --no-osd --display 4 /home/pi/PieMarquee/marquee/maintitle.mp4  > /dev/null 2>&1 &")
         else:
             os.system("/usr/bin/pngview -d4 /home/pi/PieMarquee/marquee/" + imgpath + ".png &")
             #os.system("/usr/bin/pngview -l30000 -y0 /home/pi/PieMarquee/marquee/" + imgpath + ".png &")
